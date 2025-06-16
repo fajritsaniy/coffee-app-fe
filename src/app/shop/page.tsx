@@ -160,6 +160,7 @@ export default function ShopPage() {
                           // --- INTEGRATION POINT ---
                           // Use the data from the fetched 'item' to add to the cart
                           useCartStore.getState().addToCart({
+                            id: item.id, // Use numeric ID from BE
                             name: item.name,
                             image: item.image_url, // Use image_url from BE
                             price: item.price, // Use numeric price from BE

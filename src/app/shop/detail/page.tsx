@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useCartStore } from "../../store/carStore";
 
 type Product = {
-  id: string;
+  id: number;
   name: string;
   price: number;
   image_url: string;
@@ -126,6 +126,7 @@ export default function ProductDetail() {
           onClick={(e) => {
             e.preventDefault();
             useCartStore.getState().addToCart({
+              id: product.id, // Use numeric ID from BE
               name: product.name,
               image: product.image_url,
               price: product.price,

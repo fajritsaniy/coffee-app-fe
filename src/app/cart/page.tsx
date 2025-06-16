@@ -21,12 +21,52 @@ export default function CartPage() {
   const decreaseQty = useCartStore((state) => state.decreaseQty);
   const removeFromCart = useCartStore((state) => state.removeFromCart);
   const total = cartItems.reduce((sum, item) => sum + item.qty * item.price, 0);
-  const [confirmItem, setConfirmItem] = useState<string | null>(null);
+  const [confirmItem, setConfirmItem] = useState<number | null>(null);
   const updateNote = useCartStore((state) => state.updateNote);
-  const [notesDraft, setNotesDraft] = useState<{ [key: string]: string }>({});
+  const [notesDraft, setNotesDraft] = useState<{ [key: number]: string }>({});
   const [confirmCheckout, setConfirmCheckout] = useState(false);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
+
+  // Example: table_id can be static or from user/session
+  const tableId = 5;
+
+  // Helper to build order payload
+  const buildOrderPayload = () => ({
+    table_id: tableId,
+    items: cartItems.map((item) => ({
+      menu_id: item.id,
+      quantity: item.qty,
+      notes: item.note || "",
+    })),
+  });
+
+  // Handler for checkout
+  const handleCheckout = async () => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch("http://localhost:3001/api/v1/orders", {
+        method: "POST",
+        headers: {
+          "x-api-key": "RAHASIA",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(buildOrderPayload()),
+      });
+      if (!res.ok) throw new Error("Gagal membuat pesanan");
+      setConfirmCheckout(false);
+      router.push("/checkout-confirmation");
+      useCartStore.getState().clearCart();
+    } catch (err: unknown) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Terjadi kesalahan saat checkout";
+      setSubmitError(errorMsg ?? "Terjadi kesalahan saat checkout");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen justify-between">
@@ -67,15 +107,15 @@ export default function CartPage() {
               {editMode ? (
                 <input
                   type="text"
-                  value={notesDraft[item.name] ?? item.note ?? ""}
+                  value={notesDraft[item.id] ?? item.note ?? ""}
                   onChange={(e) =>
                     setNotesDraft((prev) => ({
                       ...prev,
-                      [item.name]: e.target.value,
+                      [item.id]: e.target.value,
                     }))
                   }
                   onBlur={() => {
-                    updateNote(item.name, notesDraft[item.name] ?? "");
+                    updateNote(item.id, notesDraft[item.id] ?? "");
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -99,9 +139,9 @@ export default function CartPage() {
                 <button
                   onClick={() => {
                     if (item.qty === 1) {
-                      setConfirmItem(item.name); // trigger modal instead of decreasing
+                      setConfirmItem(item.id); // trigger modal instead of decreasing
                     } else {
-                      decreaseQty(item.name);
+                      decreaseQty(item.id);
                     }
                   }}
                   className="p-1 rounded bg-gray-100"
@@ -109,13 +149,13 @@ export default function CartPage() {
                   <Minus className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => increaseQty(item.name)}
+                  onClick={() => increaseQty(item.id)}
                   className="p-1 rounded bg-gray-100"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => setConfirmItem(item.name)}
+                  onClick={() => setConfirmItem(item.id)}
                   className="p-1 rounded bg-red-100 text-red-600"
                 >
                   <Trash className="w-4 h-4" />
@@ -179,21 +219,23 @@ export default function CartPage() {
             <p className="mb-4 text-base">
               Anda yakin ingin <strong>melanjutkan ke checkout</strong>?
             </p>
+            {submitError && (
+              <p className="text-red-500 text-sm mb-2">{submitError}</p>
+            )}
             <div className="flex justify-center gap-4">
               <button
                 className="px-4 py-2 rounded bg-gray-200"
                 onClick={() => setConfirmCheckout(false)}
+                disabled={isSubmitting}
               >
                 Batal
               </button>
               <button
                 className="px-4 py-2 rounded bg-black text-white"
-                onClick={() => {
-                  setConfirmCheckout(false);
-                  router.push("/checkout-confirmation");
-                }}
+                onClick={handleCheckout}
+                disabled={isSubmitting}
               >
-                Ya, Lanjutkan
+                {isSubmitting ? "Memproses..." : "Ya, Lanjutkan"}
               </button>
             </div>
           </div>

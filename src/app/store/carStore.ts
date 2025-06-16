@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 export type CartItem = {
+    id: number;
     name: string;
     image: string;
     price: number;
@@ -11,22 +12,22 @@ export type CartItem = {
 export type CartState = {
     cart: CartItem[];
     addToCart: (item: CartItem) => void;
-    removeFromCart: (name: string) => void;
+    removeFromCart: (id: number) => void;
     clearCart: () => void;
-    increaseQty: (name: string) => void;
-    decreaseQty: (name: string) => void;
-    updateNote: (name: string, note: string) => void;
+    increaseQty: (id: number) => void;
+    decreaseQty: (id: number) => void;
+    updateNote: (id: number, note: string) => void;
 };
 
 export const useCartStore = create<CartState>((set) => ({
     cart: [],
     addToCart: (item) =>
         set((state: CartState) => {
-            const exists = state.cart.find((i) => i.name === item.name);
+            const exists = state.cart.find((i) => i.id === item.id);
             if (exists) {
                 return {
                     cart: state.cart.map((i) =>
-                        i.name === item.name
+                        i.id === item.id
                             ? {
                                 ...i,
                                 qty: i.qty + item.qty,
@@ -41,30 +42,30 @@ export const useCartStore = create<CartState>((set) => ({
                 };
             }
         }),
-    removeFromCart: (name) =>
+    removeFromCart: (id) =>
         set((state: CartState) => ({
-            cart: state.cart.filter((i) => i.name !== name),
+            cart: state.cart.filter((i) => i.id !== id),
         })),
     clearCart: () => set({ cart: [] }),
-    updateNote: (name, note) =>
+    updateNote: (id, note) =>
         set((state) => ({
             cart: state.cart.map((item) =>
-                item.name === name ? { ...item, note } : item
+                item.id === id ? { ...item, note } : item
             ),
         })),
 
     // 🆕 Add these two:
-    increaseQty: (name) =>
+    increaseQty: (id) =>
         set((state: CartState) => ({
             cart: state.cart.map((item) =>
-                item.name === name ? { ...item, qty: item.qty + 1 } : item
+                item.id === id ? { ...item, qty: item.qty + 1 } : item
             ),
         })),
-    decreaseQty: (name) =>
+    decreaseQty: (id) =>
         set((state: CartState) => ({
             cart: state.cart
                 .map((item) =>
-                    item.name === name ? { ...item, qty: item.qty - 1 } : item
+                    item.id === id ? { ...item, qty: item.qty - 1 } : item
                 )
                 .filter((item) => item.qty > 0), // auto-remove if qty goes to 0
         })),
