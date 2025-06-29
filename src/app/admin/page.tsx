@@ -21,6 +21,7 @@ interface OrderItem {
 
 interface Order {
   id: number;
+  name: string;
   table_id: number;
   items: OrderItem[];
   created_at: string;
@@ -35,6 +36,7 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"menu" | "orders">("menu");
 
   const API_KEY = "RAHASIA";
   const ADMIN_PASSWORD = "admin123"; // Change this in production!
@@ -118,103 +120,125 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
+      <div className="mb-6 flex gap-4">
+        <button
+          className={`px-4 py-2 rounded-t font-semibold border-b-2 ${
+            activeTab === "menu"
+              ? "border-black bg-white"
+              : "border-transparent bg-gray-200 text-gray-500"
+          }`}
+          onClick={() => setActiveTab("menu")}
+        >
+          Stok Menu
+        </button>
+        <button
+          className={`px-4 py-2 rounded-t font-semibold border-b-2 ${
+            activeTab === "orders"
+              ? "border-black bg-white"
+              : "border-transparent bg-gray-200 text-gray-500"
+          }`}
+          onClick={() => setActiveTab("orders")}
+        >
+          Daftar Pesanan
+        </button>
+      </div>
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Menu Stock Tracking */}
-        <section className="flex-1 bg-white rounded shadow p-6 mb-8 md:mb-0">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold">Stok Menu</h2>
-            <button
-              onClick={fetchMenu}
-              className="text-xs bg-gray-200 px-3 py-1 rounded"
-              disabled={loading}
-            >
-              {loading ? "Memuat..." : "Refresh"}
-            </button>
-          </div>
-          <table className="w-full text-sm border">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="p-2 border">Nama</th>
-                <th className="p-2 border">Harga</th>
-                <th className="p-2 border">Stok</th>
-                <th className="p-2 border">Tersedia</th>
-              </tr>
-            </thead>
-            <tbody>
-              {menu.map((item) => (
-                <tr key={item.id}>
-                  <td className="p-2 border">{item.name}</td>
-                  <td className="p-2 border">
-                    {item.price.toLocaleString("id-ID", {
-                      style: "currency",
-                      currency: "IDR",
-                      minimumFractionDigits: 0,
-                    })}
-                  </td>
-                  <td className="p-2 border text-center">
-                    {item.stock ?? "-"}
-                  </td>
-                  <td className="p-2 border text-center">
-                    {item.is_available ? "✅" : "❌"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-
-        {/* Order Tracking */}
-        <section className="flex-1 bg-white rounded shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold">Daftar Pesanan</h2>
-            <button
-              onClick={fetchOrders}
-              className="text-xs bg-gray-200 px-3 py-1 rounded"
-              disabled={refreshing}
-            >
-              {refreshing ? "Memuat..." : "Refresh"}
-            </button>
-          </div>
-          <div className="overflow-x-auto">
+        {activeTab === "menu" && (
+          <section className="flex-1 bg-white rounded shadow p-6 mb-8 md:mb-0">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold">Stok Menu</h2>
+              <button
+                onClick={fetchMenu}
+                className="text-xs bg-gray-200 px-3 py-1 rounded"
+                disabled={loading}
+              >
+                {loading ? "Memuat..." : "Refresh"}
+              </button>
+            </div>
             <table className="w-full text-sm border">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="p-2 border">ID</th>
-                  <th className="p-2 border">Meja</th>
-                  <th className="p-2 border">Waktu</th>
-                  <th className="p-2 border">Status</th>
-                  <th className="p-2 border">Menu</th>
+                  <th className="p-2 border">Nama</th>
+                  <th className="p-2 border">Harga</th>
+                  <th className="p-2 border">Stok</th>
+                  <th className="p-2 border">Tersedia</th>
+                  <th className="p-2 border">Aksi</th>
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order) => (
-                  <tr key={order.id}>
-                    <td className="p-2 border">{order.id}</td>
-                    <td className="p-2 border">{order.table_id}</td>
+                {menu.map((item) => (
+                  <tr key={item.id}>
+                    <td className="p-2 border">{item.name}</td>
                     <td className="p-2 border">
-                      {new Date(order.created_at).toLocaleString("id-ID")}
+                      {item.price.toLocaleString("id-ID", {
+                        style: "currency",
+                        currency: "IDR",
+                        minimumFractionDigits: 0,
+                      })}
                     </td>
-                    <td className="p-2 border">{order.status || "-"}</td>
-                    <td className="p-2 border">
-                      <ul className="list-disc ml-4">
-                        {(order.items ?? []).map((item, idx) => (
-                          <li key={idx}>
-                            {item.name || item.menu_id} x{item.quantity}{" "}
-                            {item.notes && (
-                              <span className="italic text-xs">
-                                ({item.notes})
-                              </span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
+                    <td className="p-2 border text-center">
+                      {item.stock ?? "-"}
+                    </td>
+                    <td className="p-2 border text-center">
+                      {item.is_available ? "✅" : "❌"}
+                    </td>
+                    <td className="p-2 border text-center">
+                      <button
+                        className="text-blue-500 hover:underline"
+                        onClick={() => {
+                          // Handle edit action here
+                          alert(`Edit ${item.name}`);
+                        }}
+                      >
+                        Edit
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-        </section>
+          </section>
+        )}
+        {activeTab === "orders" && (
+          <section className="flex-1 bg-white rounded shadow p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold">Daftar Pesanan</h2>
+              <button
+                onClick={fetchOrders}
+                className="text-xs bg-gray-200 px-3 py-1 rounded"
+                disabled={refreshing}
+              >
+                {refreshing ? "Memuat..." : "Refresh"}
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="p-2 border">ID</th>
+                    <th className="p-2 border">Meja</th>
+                    <th className="p-2 border">Waktu</th>
+                    <th className="p-2 border">Status</th>
+                    <th className="p-2 border">Nama</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => (
+                    <tr key={order.id}>
+                      <td className="p-2 border">{order.id}</td>
+                      <td className="p-2 border">{order.table_id}</td>
+                      <td className="p-2 border">
+                        {new Date(order.created_at).toLocaleString("id-ID")}
+                      </td>
+                      <td className="p-2 border">{order.status || "-"}</td>
+                      <td className="p-2 border">{order.name || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );

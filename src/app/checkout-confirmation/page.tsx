@@ -3,12 +3,16 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useCartStore } from "../store/carStore";
+import { useSearchParams } from "next/navigation";
 
 export default function CheckoutConfirmation() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const table = searchParams.get("table") || 1;
+
   const handleClose = () => {
     // Navigate to the homepage
-    router.push("/");
+    router.push(`/?table=${encodeURIComponent(table)}`);
     useCartStore.getState().clearCart();
   };
 

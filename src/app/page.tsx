@@ -3,19 +3,26 @@
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import SplashScreen from "./components/SplashScreen";
 
 export default function Home() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const searchParams = useSearchParams();
+  const table = searchParams.get("table") || 1;
 
   const handleNext = () => {
     if (name.trim() === "") {
       setError("Name is required.");
     } else {
       setError("");
-      router.push(`/shop?name=${encodeURIComponent(name)}`);
+      router.push(
+        `/shop?name=${encodeURIComponent(name)}&table=${encodeURIComponent(
+          table
+        )}`
+      );
     }
   };
 

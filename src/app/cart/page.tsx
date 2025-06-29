@@ -4,6 +4,7 @@ import { X, Minus, Plus, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCartStore } from "../store/carStore";
+import { useSearchParams } from "next/navigation";
 
 // Helper function to format numbers into Indonesian Rupiah currency
 const formatRupiah = (number: number) => {
@@ -28,13 +29,14 @@ export default function CartPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
-
-  // Example: table_id can be static or from user/session
-  const tableId = 5;
+  const searchParams = useSearchParams();
+  const name = searchParams.get("name") || "Teman Kopi 104";
+  const table = searchParams.get("table") || 1;
 
   // Helper to build order payload
   const buildOrderPayload = () => ({
-    table_id: tableId,
+    table_id: Number(table),
+    name: name,
     items: cartItems.map((item) => ({
       menu_id: item.id,
       quantity: item.qty,
@@ -57,7 +59,11 @@ export default function CartPage() {
       });
       if (!res.ok) throw new Error("Gagal membuat pesanan");
       setConfirmCheckout(false);
-      router.push("/checkout-confirmation");
+      router.push(
+        `/checkout-confirmation?name=${encodeURIComponent(
+          name
+        )}&table=${encodeURIComponent(table)}`
+      );
       useCartStore.getState().clearCart();
     } catch (err: unknown) {
       const errorMsg =
